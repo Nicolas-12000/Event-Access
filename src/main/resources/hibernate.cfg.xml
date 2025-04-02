@@ -1,0 +1,23 @@
+  <session-factory>
+    <!-- Configuración de MariaDB/MySQL -->
+    <property name="hibernate.connection.driver_class">com.mysql.cj.jdbc.Driver</property>
+    <property name="hibernate.connection.url">jdbc:mysql://localhost:3306/seminario</property>
+    <property name="hibernate.connection.username">root</property>
+    <property name="hibernate.connection.password"></property>
+
+
+
+    <!-- Dialecto para MariaDB (ajusta según tu versión) -->
+    <property name="hibernate.dialect">org.hibernate.dialect.MariaDB103Dialect</property>
+
+    <!-- Opciones de Hibernate -->
+    <property name="hibernate.show_sql">true</property>
+    <property name="hibernate.format_sql">true</property>
+    <property name="hibernate.hbm2ddl.auto">update</property>
+
+        <mapping class="com.eventos.model.Event"/>
+        <mapping class="com.eventos.model.Payments"/>
+        <mapping class="com.eventos.model.Registration"/>
+        <mapping class="com.eventos.model.Student"/>
+    </session-factory>
+</hibernate-configuration>
