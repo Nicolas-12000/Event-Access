@@ -1,11 +1,12 @@
 package com.eventos.repository;
 
-import org.springframework.data.repository.CrudRepository;
+import com.eventos.model.EventData;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.eventos.model.EventData;
-
+import java.util.List;
 @Repository
-public interface EventDataRepository extends CrudRepository<EventData, Long> {
+public interface EventDataRepository extends JpaRepository<EventData, Long> {
+    List<EventData> findByEvent_EventId(Long eventId);
 
 }

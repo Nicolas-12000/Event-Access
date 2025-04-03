@@ -18,9 +18,7 @@ public class SecurityConfig {
         http
             .cors(cors -> cors.configurationSource(request -> {
                 CorsConfiguration config = new CorsConfiguration();
-                // Orígenes permitidos (ajusta en producción)
                 config.setAllowedOrigins(List.of("*")); 
-                // Métodos HTTP permitidos
                 config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE")); 
                 config.setAllowedHeaders(List.of("*"));
                 return config;

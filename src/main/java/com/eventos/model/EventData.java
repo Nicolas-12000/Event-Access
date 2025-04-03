@@ -11,12 +11,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Entity
 @Data
-@NoArgsConstructor
-
 
 public class EventData {
 
@@ -37,7 +34,7 @@ public class EventData {
     }
 
     private LocalDate startDate;
-    private LocalTime starTime;
+    private LocalTime startTime;
     private LocalTime endTime;
     private LocalDate endDate; 
     private String description;

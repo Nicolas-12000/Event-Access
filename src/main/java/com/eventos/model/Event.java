@@ -1,6 +1,5 @@
 package com.eventos.model;
 
-import java.util.UUID;
 
 
 import jakarta.persistence.Column;
@@ -18,7 +17,7 @@ import lombok.Data;
 public class Event {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private UUID eventId;
+    private Long eventId;
 
     @Column(nullable = false)
     private String name;
