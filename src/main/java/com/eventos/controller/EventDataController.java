@@ -2,12 +2,12 @@ package com.eventos.controller;
 
 import com.eventos.model.EventData;
 import com.eventos.repository.EventDataRepository;
-import com.eventos.repository.EventRepository; // Importado para validación
+import com.eventos.repository.EventRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.dao.DataIntegrityViolationException; // Import
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,22 +20,22 @@ public class EventDataController {
     private EventDataRepository eventDataRepository;
 
     @Autowired
-    private EventRepository eventRepository; // Inyectado para validación
+    private EventRepository eventRepository;
 
     // CREATE
     @PostMapping
     public ResponseEntity<?> createEventData(@RequestBody EventData eventData) { // Usar<?>
         // Validación de Clave Foránea (Evento)
         if (eventData.getEvent() == null || eventData.getEvent().getEventId() == null) {
-             return ResponseEntity.badRequest().body("Event ID is required.");
+             return ResponseEntity.badRequest().body("Event ID es requerido.");
         }
         Long eventId = eventData.getEvent().getEventId();
         if (!eventRepository.existsById(eventId)) {
-            return ResponseEntity.badRequest().body("Event with ID " + eventId + " not found.");
+            return ResponseEntity.badRequest().body("Evento con ID " + eventId + " no encontrado.");
         }
 
         try {
-            eventData.setAttendanceCount(0); // Asegurar que inicia en 0
+            eventData.setAttendanceCount(0);
             EventData savedEventData = eventDataRepository.save(eventData);
             return new ResponseEntity<>(savedEventData, HttpStatus.CREATED);
         } catch (DataIntegrityViolationException e) {

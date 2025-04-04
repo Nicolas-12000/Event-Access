@@ -22,7 +22,6 @@ public class StudentController {
     @PostMapping
     public ResponseEntity<?> createStudent(@RequestBody Student student) { 
         try {
-            // Validación adicional podría ir aquí (aunque @NotBlank/@Email ya ayudan)
             Student savedStudent = studentRepository.save(student);
             return new ResponseEntity<>(savedStudent, HttpStatus.CREATED);
         } catch (DataIntegrityViolationException e) {

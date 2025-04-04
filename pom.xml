@@ -20,7 +20,7 @@
         <java.version>21</java.version>
         <apache.poi.version>5.2.5</apache.poi.version>
         <springdoc.openapi.version>2.5.0</springdoc.openapi.version>
-        <lombok.version>1.18.30</lombok.version> <!-- Versión explícita para Lombok -->
+        <lombok.version>1.18.30</lombok.version>
     </properties>
 
     <dependencies>

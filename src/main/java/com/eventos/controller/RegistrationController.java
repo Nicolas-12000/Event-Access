@@ -53,9 +53,6 @@ public class RegistrationController {
             if (!eventDataRepository.existsById(eventDataId)) {
                  return ResponseEntity.badRequest().body("EventData (TimeEvent) with ID " + eventDataId + " not found.");
             }
-             // Opcional: Validar que este EventData pertenece al Event principal?
-             // Optional<EventData> ed = eventDataRepository.findById(eventDataId);
-             // if (ed.isPresent() && !ed.get().getEvent().getEventId().equals(eventId)) { ... }
         }
         // --- Fin Validaciones ---
 
