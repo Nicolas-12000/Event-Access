@@ -24,7 +24,6 @@ import java.util.UUID;
 public class QRCodeUseCase implements QRCodeInputPort {
 
     private static final int QR_CODE_SIZE = 300;
-    private static final int EXPIRATION_HOURS = 48;
     
     private final QRCodeOutputPort qrCodeOutputPort;
     private final StudentOutputPort studentOutputPort;
@@ -53,7 +52,7 @@ public class QRCodeUseCase implements QRCodeInputPort {
         qrCode.setEvent(event);
         qrCode.setStudent(student);
         qrCode.setQrImage(generateQRImage(student, event));
-        qrCode.setExpirationDate(LocalDateTime.now().plusHours(EXPIRATION_HOURS));
+        qrCode.setExpirationDate(event.getEndDate().atTime(23, 59).plusHours(24));
         qrCode.setUsed(false);
 
         return qrCodeOutputPort.saveQRCode(qrCode);
@@ -96,8 +95,8 @@ public class QRCodeUseCase implements QRCodeInputPort {
 
     @Override
     @Transactional
-    public boolean validateQRCode(String qrCode) {
-        QRCode code = qrCodeOutputPort.getQRCodeById(UUID.fromString(qrCode))
+    public boolean validateQRCode(UUID qrCode) {
+        QRCode code = qrCodeOutputPort.getQRCodeById(qrCode)
                 .orElseThrow(() -> new IllegalArgumentException("QR no válido"));
         
         if (LocalDateTime.now().isAfter(code.getExpirationDate())) {
@@ -110,8 +109,16 @@ public class QRCodeUseCase implements QRCodeInputPort {
     }
 
     @Override
-    public QRCode getQRCodeById(String qrCode) {
-        return qrCodeOutputPort.getQRCodeById(UUID.fromString(qrCode))
-                .orElseThrow(() -> new IllegalArgumentException(qrCode));
+    public QRCode getQRCodeById(UUID qrCode) {
+        return qrCodeOutputPort.getQRCodeById(qrCode)
+                .orElseThrow(() -> new IllegalArgumentException(qrCode.toString()));
     }
+
+    @Override
+    @Transactional
+    public QRCode deleteQRCode(UUID qrCode) {
+        qrCodeOutputPort.getQRCodeById(qrCode)
+            .orElseThrow(() -> new IllegalArgumentException("QR no encontrado"));
+        return qrCodeOutputPort.deleteQRCode(qrCode);
+}
 }

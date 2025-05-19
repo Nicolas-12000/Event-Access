@@ -1,5 +1,7 @@
 package com.eventos.application.ports.input;
 
+import java.util.List;
+
 import com.eventos.model.Event;
 
 public interface EventInputPort {
@@ -9,5 +11,6 @@ public interface EventInputPort {
     Event getEventById(Long eventId);
     Event updateEvent(Event event);
     void deleteEvent(Long eventId);
+    List<Event> getAllEvents();
 
 }

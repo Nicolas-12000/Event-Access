@@ -1,5 +1,6 @@
 package com.eventos.application.usecases;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.springframework.stereotype.Service;
@@ -55,5 +56,10 @@ public class EventUseCase implements EventInputPort{
     public void deleteEvent(Long eventId) {
         Event event = getEventById(eventId);
         eventOutputPort.deleteEvent(event.getEventId());
+    }
+
+    @Override
+    public List<Event> getAllEvents() {
+        return eventOutputPort.getAllEvents();
     }
 }

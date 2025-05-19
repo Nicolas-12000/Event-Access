@@ -13,14 +13,18 @@ import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import lombok.AllArgsConstructor;
 
 @Entity
+@Builder
 @Getter
 @Setter
 @ToString
+@AllArgsConstructor
 
 @Table (name="events")
 public class Event {

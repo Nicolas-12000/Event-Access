@@ -8,8 +8,9 @@ import java.util.Optional;
 
 public interface StudentInputPort {
     List<Student> uploadStudentsFromExcel(InputStream excelFile) throws IOException;
-    Student createStudent(Student student );
+    Student createStudent(Student student);
     Optional<Student> getStudentById(String identityDocument);
     List<Student> getAllStudents();
-    void updateStudent(String identityDocument, Student student);
+    Student updateStudent(String identityDocument, Student student);
+    void removeStudent(String identityDocument);
 }

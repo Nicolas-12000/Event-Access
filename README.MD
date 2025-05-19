@@ -7,128 +7,147 @@
 
 Aplicación Spring Boot robusta para la gestión integral de eventos: registros, pagos y control de acceso mediante códigos QR. Cuenta con una API RESTful bien definida y medidas de seguridad básicas para proteger la información.
 
+---
+
+## 📦 Arquitectura
+
+El proyecto sigue una arquitectura **hexagonal (puertos y adaptadores)**, separando claramente la lógica de negocio, la infraestructura y los modelos de dominio. Esto facilita la mantenibilidad, escalabilidad y pruebas.
+
+- **application**: Casos de uso y puertos (interfaces).
+- **infrastructure**: Adaptadores de entrada (controladores) y salida (persistencia, servicios externos).
+- **model**: Entidades de dominio.
+- **config**: Configuración de seguridad, CORS, etc.
+
+---
+
 ## 📋 Requisitos Previos
 
-Asegúrate de tener instaladas las siguientes herramientas en tu entorno de desarrollo:
+- **Java**: Versión 21 o superior ([Descargar](https://www.oracle.com/java/technologies/javase-jdk21-downloads.html))
+- **MySQL**: Versión 8 o superior ([Descargar](https://www.mysql.com/downloads/))
+- **Maven**: Versión 3.9 o superior ([Descargar](https://maven.apache.org/download.cgi))
+- **Postman** o **cURL**: Para pruebas de la API ([Postman](https://www.postman.com/downloads/) / [cURL](https://curl.se/download/))
 
-* **Java**: Versión 21 o superior ([Descargar](https://www.oracle.com/java/technologies/javase-jdk21-downloads.html))
-* **MySQL**: Versión 8 o superior ([Descargar](https://www.mysql.com/downloads/))
-* **Maven**: Versión 3.9 o superior ([Descargar](https://maven.apache.org/download.cgi))
-* **Postman** o **cURL**: Para la prueba y consumo de la API RESTful ([Postman](https://www.postman.com/downloads/) / [cURL](https://curl.se/download/))
+---
 
 ## 🚀 Instalación
 
-Sigue estos sencillos pasos para poner en marcha la aplicación:
-
-1.  **Clonar el repositorio:**
-
+1. **Clona el repositorio:**
     ```bash
     git clone [URL_DEL_REPOSITORIO]
-    cd nicolas-12000-event-access
+    cd event-access-api
     ```
 
-2.  **Crear la base de datos MySQL:**
-
-    Ejecuta la siguiente sentencia SQL en tu cliente de MySQL:
-
+2. **Crea la base de datos MySQL:**
     ```sql
     CREATE DATABASE seminario;
     ```
 
-3.  **Configurar las credenciales de la base de datos:**
-
-    Edita el archivo `application.properties` ubicado en la siguiente ruta:
-
-    ```
-    src/main/resources/application.properties
-    ```
-
-    Y actualiza las propiedades de conexión con tus credenciales de MySQL:
-
+3. **Configura las credenciales de la base de datos:**
+    Edita `src/main/resources/application.properties`:
     ```properties
     spring.datasource.url=jdbc:mysql://localhost:3306/seminario
     spring.datasource.username=tu_usuario
     spring.datasource.password=tu_contraseña
     ```
 
+---
+
 ## ⚙️ Ejecución
 
-Para iniciar la aplicación Spring Boot, ejecuta el siguiente comando desde la raíz del proyecto:
-
+Para iniciar la aplicación Spring Boot:
 ```bash
 ./mvnw spring-boot:run
-Una vez que la aplicación se haya iniciado correctamente, estará disponible en la siguiente URL:
+```
+La API estará disponible en:  
+[http://localhost:8082](http://localhost:8082)
 
-http://localhost:8082
+---
 
 ## 📌 Endpoints Principales de la API
 
-A continuación, se describen los principales endpoints de la API RESTful:
-
 ### Eventos (`/api/events`)
-
-* `GET /api/events`: Obtiene la lista de todos los eventos.
-* `POST /api/events`: Crea un nuevo evento.
-
-    **Ejemplo de cuerpo de la petición (JSON):**
-
-    ```json
-    {
-      "name": "Concierto Rock",
-      "place": "Estadio Nacional",
-      "description": "Evento musical"
-    }
-    ```
-
-    **Ejemplo de uso con cURL:**
-
-    ```bash
-    curl -X POST -H "Content-Type: application/json" -d '{
-      "name": "Concierto Rock",
-      "place": "Estadio Nacional",
-      "description": "Evento musical"
-    }' http://localhost:8082/api/events
-    ```
-
-* `PUT /api/events/{eventId}`: Actualiza la información de un evento específico.
-* `DELETE /api/events/{eventId}`: Elimina un evento.
+- `GET /api/events`: Lista todos los eventos.
+- `POST /api/events`: Crea un evento.
+- `PUT /api/events/{eventId}`: Actualiza un evento.
+- `DELETE /api/events/{eventId}`: Elimina un evento.
 
 ### Estudiantes (`/api/students`)
-
-* `POST /api/students`: Registra un nuevo estudiante.
-* `GET /api/students/{identityDocument}`: Obtiene la información de un estudiante por su documento de identidad.
+- `POST /api/students`: Registra un estudiante.
+- `GET /api/students/{identityDocument}`: Consulta un estudiante.
 
 ### Pagos (`/api/payments`)
-
-* `POST /api/payments`: Registra un nuevo pago.
-* `GET /api/payments/event/{eventId}/student/{identityDocument}`: Obtiene el historial de pagos de un estudiante para un evento específico.
+- `POST /api/payments`: Registra un pago.
+- `GET /api/payments/event/{eventId}/student/{identityDocument}`: Historial de pagos de un estudiante para un evento.
 
 ### Registros (`/api/registrations`)
+- `POST /api/registrations`: Registra a un estudiante en un evento.
+- `GET /api/registrations/{id}`: Consulta un registro.
 
-* `POST /api/registrations`: Registra a un estudiante en un evento.
-* `GET /api/registrations/{id}`: Obtiene la información de un registro específico.
+### QR Codes (`/api/qr_codes`)
+- `POST /api/qr_codes/generate`: Genera un QR para un estudiante y evento.
+- `POST /api/qr_codes/validate/{qrId}`: Valida un QR.
+- `DELETE /api/qr_codes/{qrId}`: Elimina un QR (si implementado).
+
+---
+
+## 🛡️ Seguridad
+
+- **CORS**: Permitido solo para `http://localhost:3000` (ajusta para producción).
+- **CSRF**: Deshabilitado (solo para desarrollo, habilitar en producción si usas sesiones).
+- **Autenticación**: Actualmente, todos los endpoints `/api/**` y `/qr_codes/**` son públicos.  
+  **Mejora recomendada:** Implementar autenticación JWT para endpoints sensibles.
+
+---
+
+## 🛠️ Mejoras y Consideraciones Técnicas
+
+- **Sincroniza interfaces y adaptadores:** Asegúrate de que todos los métodos implementados estén en las interfaces.
+- **Centraliza validaciones y manejo de errores:** Usa `@ControllerAdvice` para respuestas uniformes.
+- **Limpia imports y métodos no usados.**
+- **Agrega pruebas unitarias y de integración.**
+- **Documenta la API con Swagger/OpenAPI.**
+- **Revisa las relaciones JPA:** Usa `cascade = CascadeType.ALL, orphanRemoval = true` si quieres eliminar en cascada.
+- **Evita validaciones duplicadas** (en entidades y casos de uso).
+- **Manejo de fechas:** Considera inyectar un servicio de tiempo para facilitar pruebas.
+- **Excepciones personalizadas:** Usa excepciones específicas para errores de negocio.
+
+---
 
 ## 📚 Documentación de la API
 
-Para explorar y probar la API de manera interactiva, puedes acceder a la documentación generada por Swagger UI en la siguiente URL:
+Si tienes Swagger configurado, accede a:  
+[http://localhost:8082/swagger-ui.html](http://localhost:8082/swagger-ui.html)
 
-http://localhost:8082/swagger-ui.html
+---
 
-## 🛠️ Mejoras Pendientes
+## 🚩 Advertencias y Limitaciones
 
-Esta aplicación se encuentra en desarrollo y las siguientes funcionalidades están en la hoja de ruta:
+- **No uses CSRF deshabilitado en producción.**
+- **No expongas endpoints públicos sin autenticación si manejas datos sensibles.**
+- **Revisa los constraints y nombres de columnas en tus entidades JPA.**
+- **Asegúrate de que los métodos de locking (`findByIdWithLock`) estén implementados en los repositorios.**
 
-* Implementación del controlador `QrController.java` para la generación y gestión de códigos QR.
-* Adición de autenticación y autorización basada en JWT para asegurar los endpoints de la API.
-* Generación de reportes en formato PDF y/o Excel con información relevante de los eventos y registros.
-* Integración con una pasarela de pagos real para procesar transacciones de forma segura.
+---
 
 ## 🤝 Contribución
 
-¡Las contribuciones son bienvenidas! Si deseas colaborar en este proyecto, sigue estos pasos:
+¡Las contribuciones son bienvenidas!
 
-1.  Haz un fork del repositorio.
-2.  Crea una rama con tu nueva funcionalidad: `git checkout -b feature/nueva-funcionalidad`
-3.  Realiza tus cambios y commitealos: `git commit -m 'Añadir funcionalidad'`
-4.  Sube tus cambios a tu fork: `git push origin feature/nueva-funcionalidad`
-5.  Abre un Pull Request para que podamos revisar tus contribuciones.
+1. Haz un fork del repositorio.
+2. Crea una rama: `git checkout -b feature/nueva-funcionalidad`
+3. Realiza tus cambios y commitea: `git commit -m 'Añadir funcionalidad'`
+4. Sube tus cambios: `git push origin feature/nueva-funcionalidad`
+5. Abre un Pull Request.
+
+---
+
+## 📄 Licencia
+
+Este proyecto está bajo la licencia MIT.
+
+---
+
+## ✉️ Contacto
+
+¿Dudas o sugerencias?  
+Abre un issue o contacta a [nikolasg12000@gmail.com]

@@ -12,5 +12,7 @@ public interface QRCodeOutputPort {
     QRCode saveQRCode(QRCode qrCode);
     Optional<QRCode> getQRCodeById(UUID qrId);
     List<QRCode> getAllByStudentAndEvent(Student student, Event event);
+    Optional<QRCode> findLastestByStudent(Student student);
+    QRCode deleteQRCode(UUID qrCode);
 
 }

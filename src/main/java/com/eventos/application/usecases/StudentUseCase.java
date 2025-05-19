@@ -38,7 +38,7 @@ public class StudentUseCase implements StudentInputPort {
         try (Workbook workbook = new XSSFWorkbook(excelFile)) {
             Sheet sheet = workbook.getSheetAt(0);
             for (Row row : sheet) {
-                if (row.getRowNum() == 0) continue; // Skip header row
+                if (row.getRowNum() == 0) continue;
 
                 Student student = parseStudentFromRow(row);
                 validateStudent(student);
@@ -100,7 +100,7 @@ public class StudentUseCase implements StudentInputPort {
 
     @Override
     @Transactional
-    public void updateStudent(String identityDocument, Student student) {
+    public Student updateStudent(String identityDocument, Student student) {
         Student existingStudent = studentOutputPort.getStudentById(identityDocument)
             .orElseThrow(() -> new IllegalArgumentException("Estudiante no encontrado: " + identityDocument));
         
@@ -115,7 +115,15 @@ public class StudentUseCase implements StudentInputPort {
         existingStudent.setAddress(student.getAddress());
         existingStudent.setPhoneNumber(student.getPhoneNumber());
         
-        studentOutputPort.saveStudent(existingStudent);
+        return studentOutputPort.saveStudent(existingStudent);
+    }
+
+    @Override
+    @Transactional
+    public void removeStudent(String identityDocument) {
+        studentOutputPort.getStudentById(identityDocument)
+            .orElseThrow(() -> new IllegalArgumentException("Estudiante no encontrado: " + identityDocument));
+        studentOutputPort.deleteStudent(identityDocument);
     }
 
     private void validateStudent(Student student) {

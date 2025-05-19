@@ -8,6 +8,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import jakarta.persistence.UniqueConstraint;
@@ -18,10 +19,11 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.FetchType;
 
 @Entity
+@Builder
 @Getter
 @Setter
 @Table(name="attendances", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"event_id", "identity_document","number_of_sessions, qr_code_id"})
+   @UniqueConstraint(columnNames = {"event_id", "identity_document", "number_of_sessions", "qr_code_id"})
 })
 public class Attendance {
 
@@ -34,7 +36,7 @@ public class Attendance {
     private QRCode qrCode;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = " identity_document", nullable = false)
+    @JoinColumn(name = "identity_document", nullable = false)
     private Student student;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -46,6 +48,7 @@ public class Attendance {
     private int numberOfSessions;
 
     @Column(name = "registration_time", nullable = false)
+    @Builder.Default
     private LocalDateTime registrationTime = LocalDateTime.now();
 
     @PrePersist
