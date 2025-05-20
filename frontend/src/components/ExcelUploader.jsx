@@ -1,4 +1,3 @@
-// components/ExcelUploader.jsx
 import React from 'react';
 import { useDropzone } from 'react-dropzone';
 import { uploadStudents } from '../services/studentService';
@@ -7,11 +6,8 @@ const ExcelUploader = () => {
   const onDrop = async (acceptedFiles) => {
     if (acceptedFiles.length > 0) {
       const file = acceptedFiles[0];
-      const formData = new FormData();
-      formData.append('file', file);
-
       try {
-        await uploadStudents(formData); // Assuming uploadStudents handles FormData
+        await uploadStudents(file);
         alert('Estudiantes cargados exitosamente!');
       } catch (error) {
         console.error('Error uploading students:', error);

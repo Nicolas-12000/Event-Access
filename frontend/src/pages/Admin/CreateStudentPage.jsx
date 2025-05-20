@@ -10,10 +10,8 @@ const CreateStudentPage = () => {
   const onSubmit = async (data) => {
     try {
       await createStudent(data);
-      // Handle success, maybe show a success message
-      navigate('/admin/students'); // Redirect to student list on success
+      navigate('/admin/students');
     } catch (error) {
-      // Handle error, display an error message
       console.error('Error creating student:', error);
     }
   };
@@ -28,7 +26,7 @@ const CreateStudentPage = () => {
             id="identityDocument"
             {...register('identityDocument', { required: 'Identity Document is required' })}
           />
-          {errors.identityDocument && <p>{errors.identityDocument.message}</p>}
+          {errors.identityDocument && <p style={{ color: 'red' }}>{errors.identityDocument.message}</p>}
         </div>
         <div>
           <label htmlFor="name">Name:</label>
@@ -36,7 +34,7 @@ const CreateStudentPage = () => {
             id="name"
             {...register('name', { required: 'Name is required' })}
           />
-          {errors.name && <p>{errors.name.message}</p>}
+          {errors.name && <p style={{ color: 'red' }}>{errors.name.message}</p>}
         </div>
         <div>
           <label htmlFor="lastName">Last Name:</label>
@@ -44,16 +42,22 @@ const CreateStudentPage = () => {
             id="lastName"
             {...register('lastName', { required: 'Last Name is required' })}
           />
-          {errors.lastName && <p>{errors.lastName.message}</p>}
+          {errors.lastName && <p style={{ color: 'red' }}>{errors.lastName.message}</p>}
         </div>
         <div>
           <label htmlFor="email">Email:</label>
           <input
             id="email"
             type="email"
-            {...register('email', { required: 'Email is required' })}
+            {...register('email', {
+              required: 'Email is required',
+              pattern: {
+                value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                message: 'Invalid email format'
+              }
+            })}
           />
-          {errors.email && <p>{errors.email.message}</p>}
+          {errors.email && <p style={{ color: 'red' }}>{errors.email.message}</p>}
         </div>
         <div>
           <label htmlFor="documentType">Document Type:</label>
@@ -66,9 +70,19 @@ const CreateStudentPage = () => {
           <label htmlFor="semester">Semester:</label>
           <input
             id="semester"
-            {...register('semester', { required: 'Semester is required' })}
+            {...register('semester', {
+              required: 'Semester is required',
+              pattern: {
+                value: /^[0-9]{1,2}$/,
+                message: 'Semester must be a number between 1 and 12'
+              },
+              validate: value => {
+                const num = Number(value);
+                return num >= 1 && num <= 12 || 'Semester must be between 1 and 12';
+              }
+            })}
           />
-          {errors.semester && <p>{errors.semester.message}</p>}
+          {errors.semester && <p style={{ color: 'red' }}>{errors.semester.message}</p>}
         </div>
         <div>
           <label htmlFor="universityId">University ID:</label>
@@ -88,8 +102,14 @@ const CreateStudentPage = () => {
           <label htmlFor="phoneNumber">Phone Number:</label>
           <input
             id="phoneNumber"
-            {...register('phoneNumber')}
+            {...register('phoneNumber', {
+              pattern: {
+                value: /^\+?[0-9]{10,15}$/,
+                message: 'Phone number must be between 10 and 15 digits'
+              }
+            })}
           />
+          {errors.phoneNumber && <p style={{ color: 'red' }}>{errors.phoneNumber.message}</p>}
         </div>
         <button type="submit">Create Student</button>
       </form>

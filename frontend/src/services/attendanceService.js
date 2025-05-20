@@ -1,4 +1,3 @@
-// services/attendanceService.js
 import API from "./api";
 
 export const registerAttendance = async (attendanceData) => {

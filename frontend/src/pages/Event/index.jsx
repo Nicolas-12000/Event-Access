@@ -4,7 +4,7 @@ const EventPage = () => {
   return (
     <div>
       <h1>Event Page</h1>
-      {/* Content for Event Page */}
+      {/* Aquí puedes agregar navegación o componentes específicos */}
     </div>
   );
 };

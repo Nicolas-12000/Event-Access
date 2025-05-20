@@ -1,19 +1,30 @@
 // frontend/src/pages/Event/QRGenerator.jsx
 import React, { useState, useEffect } from "react";
 import QRCode from "qrcode.react";
-import { generateQR } from "../../services/qrService";
+import { generateQR, getQRDetails } from "../../services/qrService";
 
-const QRGenerator = ({ eventId }) => {
-  const [qrData, setQrData] = useState("");
+const QRGenerator = ({ eventId, identityDocument }) => {
+  const [qrId, setQrId] = useState(null);
+  const [qrImage, setQrImage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchQR = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        setLoading(true);
-        const data = await generateQR(eventId); // Call to /api/qr_codes/generate
-        setQrData(data.url);
+        // 1. Generar el QR y obtener el qrId
+        const qrResponse = await generateQR(identityDocument, eventId);
+        setQrId(qrResponse.qrId);
+
+        // 2. Obtener los detalles del QR (incluye la imagen)
+        const qrDetails = await getQRDetails(qrResponse.qrId);
+        // qrImage es un array de bytes, conviértelo a base64
+        const base64Image = `data:image/png;base64,${btoa(
+          String.fromCharCode(...new Uint8Array(qrDetails.qrImage.data))
+        )}`;
+        setQrImage(base64Image);
       } catch (err) {
         setError(err);
         console.error("Error generating QR code:", err);
@@ -21,8 +32,20 @@ const QRGenerator = ({ eventId }) => {
         setLoading(false);
       }
     };
-    fetchQR();
-  }, [eventId]);
+    if (eventId && identityDocument) {
+      fetchQR();
+    }
+  }, [eventId, identityDocument]);
+
+  const handleDownload = () => {
+    if (!qrImage) return;
+    const link = document.createElement("a");
+    link.href = qrImage;
+    link.download = `qr_event_${eventId}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   if (loading) {
     return <div>Generating QR code...</div>;
@@ -34,8 +57,13 @@ const QRGenerator = ({ eventId }) => {
 
   return (
     <div>
-      {qrData ? (
-        <QRCode value={qrData} size={256} />
+      {qrImage ? (
+        <>
+          <img src={qrImage} alt="QR Code" style={{ width: 256, height: 256 }} />
+          <div style={{ marginTop: 10 }}>
+            <button onClick={handleDownload}>Download QR</button>
+          </div>
+        </>
       ) : (
         <div>No QR code data available.</div>
       )}

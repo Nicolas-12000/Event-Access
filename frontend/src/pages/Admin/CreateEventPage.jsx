@@ -1,37 +1,26 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { createEvent } from '../../services/eventService'; // Import the event service
+import { createEvent } from '../../services/eventService';
 
 const CreateEventPage = () => {
-  // Initialize react-hook-form
-  const { register, handleSubmit, formState: { errors } } = useForm();
-  // Hook for programmatic navigation
+  const { register, handleSubmit, formState: { errors }, reset } = useForm();
   const navigate = useNavigate();
-  // State to manage loading state during creation
   const [isLoading, setIsLoading] = useState(false);
-  // State to handle creation errors
   const [error, setError] = useState(null);
-  // State to manage success message
   const [successMessage, setSuccessMessage] = useState(null);
 
-  // Function to handle form submission
   const onSubmit = async (data) => {
-    setIsLoading(true); // Start loading
-    setError(null); // Clear previous errors
-    setSuccessMessage(null); // Clear previous success message
+    setIsLoading(true);
+    setError(null);
+    setSuccessMessage(null);
 
     try {
-      // Call the createEvent function from eventService
-      // TODO: Implement createEvent in eventService.js to make an API call
-      // Assumption: createEvent takes event data and returns a success indicator or the created event object
       const newEvent = await createEvent(data);
-
-      // Assumption: The creation was successful if newEvent is returned or a success status is indicated
       if (newEvent) {
         setSuccessMessage('Event created successfully!');
-        // TODO: Optionally, redirect to the event list or details page after a short delay
-        // navigate('/admin/events'); // Example redirection
+        reset();
+        setTimeout(() => navigate('/admin/events'), 1200);
       } else {
         setError('Failed to create event.');
       }
@@ -39,16 +28,13 @@ const CreateEventPage = () => {
       console.error('Error creating event:', err);
       setError("Error creating event.");
     } finally {
-      setIsLoading(false); // Stop loading
+      setIsLoading(false);
     }
   };
-
-  // TODO: Add better styling and form layout
 
   return (
     <div>
       <h2>Create New Event</h2>
-      {/* Form for creating a new event */}
       <form onSubmit={handleSubmit(onSubmit)}>
         <div>
           <label htmlFor="name">Event Name:</label>
@@ -60,41 +46,53 @@ const CreateEventPage = () => {
           {errors.name && <p style={{ color: 'red' }}>{errors.name.message}</p>}
         </div>
         <div>
-          <label htmlFor="date">Date:</label>
-          <input
-            type="date"
-            id="date"
-            {...register('date', { required: 'Date is required' })}
-          />
-          {errors.date && <p style={{ color: 'red' }}>{errors.date.message}</p>}
-        </div>
-        <div>
-          <label htmlFor="location">Location:</label>
-          <input
-            type="text"
-            id="location"
-            {...register('location', { required: 'Location is required' })}
-          />
-          {errors.location && <p style={{ color: 'red' }}>{errors.location.message}</p>}
-        </div>
-        <div>
-          <label htmlFor="sessions">Number of Sessions:</label>
+          <label htmlFor="numberOfSessions">Number of Sessions:</label>
           <input
             type="number"
-            id="sessions"
-            {...register('sessions', { required: 'Number of sessions is required', min: 1 })}
+            id="numberOfSessions"
+            {...register('numberOfSessions', { required: 'Number of sessions is required', min: 1 })}
           />
-          {errors.sessions && <p style={{ color: 'red' }}>{errors.sessions.message}</p>}
+          {errors.numberOfSessions && <p style={{ color: 'red' }}>{errors.numberOfSessions.message}</p>}
         </div>
-        {/* TODO: Add other relevant event fields */}
-
-        {/* Submit button */}
+        <div>
+          <label htmlFor="place">Place:</label>
+          <input
+            type="text"
+            id="place"
+            {...register('place', { required: 'Place is required' })}
+          />
+          {errors.place && <p style={{ color: 'red' }}>{errors.place.message}</p>}
+        </div>
+        <div>
+          <label htmlFor="description">Description:</label>
+          <input
+            type="text"
+            id="description"
+            {...register('description')}
+          />
+        </div>
+        <div>
+          <label htmlFor="startDate">Start Date:</label>
+          <input
+            type="date"
+            id="startDate"
+            {...register('startDate', { required: 'Start date is required' })}
+          />
+          {errors.startDate && <p style={{ color: 'red' }}>{errors.startDate.message}</p>}
+        </div>
+        <div>
+          <label htmlFor="endDate">End Date:</label>
+          <input
+            type="date"
+            id="endDate"
+            {...register('endDate', { required: 'End date is required' })}
+          />
+          {errors.endDate && <p style={{ color: 'red' }}>{errors.endDate.message}</p>}
+        </div>
         <button type="submit" disabled={isLoading}>
           {isLoading ? 'Creating...' : 'Create Event'}
         </button>
       </form>
-
-      {/* Display messages */}
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {successMessage && <p style={{ color: 'green' }}>{successMessage}</p>}
     </div>

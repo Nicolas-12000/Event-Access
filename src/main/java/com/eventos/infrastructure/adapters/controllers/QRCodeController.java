@@ -2,20 +2,18 @@ package com.eventos.infrastructure.adapters.controllers;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
 import com.eventos.application.ports.input.QRCodeInputPort;
 import com.eventos.infrastructure.adapters.controllers.dto.QRCodeResponse;
 import com.eventos.infrastructure.mappers.QRCodeMapper;
+
+import com.eventos.infrastructure.adapters.output.persistence.QRCodeRepository;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -33,6 +31,9 @@ public class QRCodeController {
     private static final Logger log = LoggerFactory.getLogger(QRCodeController.class);
     private final QRCodeInputPort qrCodeInputPort;
     private final QRCodeMapper qrCodeMapper;
+
+    @Autowired
+    private QRCodeRepository qrCodeRepository;
 
     @PostMapping("/generate")
     @Transactional
@@ -79,5 +80,12 @@ public class QRCodeController {
             log.error("Error al eliminar QR ID: {}", qrId, e);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
+    }
+
+    @GetMapping("/{qrId}/details")
+    public ResponseEntity<?> getQrDetailsById(@PathVariable("qrId") UUID qrId) {
+        return qrCodeRepository.findById(qrId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 }
