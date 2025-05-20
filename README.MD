@@ -75,13 +75,9 @@ La API estará disponible en:
 - `POST /api/students`: Registra un estudiante.
 - `GET /api/students/{identityDocument}`: Consulta un estudiante.
 
-### Pagos (`/api/payments`)
-- `POST /api/payments`: Registra un pago.
-- `GET /api/payments/event/{eventId}/student/{identityDocument}`: Historial de pagos de un estudiante para un evento.
-
-### Registros (`/api/registrations`)
-- `POST /api/registrations`: Registra a un estudiante en un evento.
-- `GET /api/registrations/{id}`: Consulta un registro.
+### Registros (`/api/attendance`)
+- `POST /api/attendance`: Registra a un estudiante en un evento.
+- `GET /api/attendance/{id}`: Consulta un registro.
 
 ### QR Codes (`/api/qr_codes`)
 - `POST /api/qr_codes/generate`: Genera un QR para un estudiante y evento.
