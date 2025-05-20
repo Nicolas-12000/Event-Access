@@ -12,5 +12,6 @@ public interface EventInputPort {
     Event updateEvent(Event event);
     void deleteEvent(Long eventId);
     List<Event> getAllEvents();
+    void deleteEventByName(String eventName);
 
 }

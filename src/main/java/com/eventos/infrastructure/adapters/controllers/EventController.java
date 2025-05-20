@@ -89,4 +89,11 @@ public class EventController {
         eventInputPort.deleteEvent(eventId);
         return ResponseEntity.noContent().build();
     }
+
+    @DeleteMapping("/name/{name}")
+    @Transactional
+    public ResponseEntity<Void> deleteEventByName(@PathVariable String name) {
+        eventInputPort.deleteEventByName(name);
+        return ResponseEntity.noContent().build();
+    }
 }

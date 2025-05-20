@@ -33,7 +33,7 @@ public class AttendanceUseCase implements AttendanceInputPort {
         QRCode qrCode = qrCodeOutputPort.getQRCodeById(qrId)
                 .orElseThrow(() -> new IllegalArgumentException("QR no encontrado: " + qrId));
 
-        if (attendanceOutputPort.existsByQRId(qrId.toString(), sessionNumber)) {
+        if (attendanceOutputPort.existsByQRId(qrId, sessionNumber)) {
             throw new IllegalArgumentException("Asistencia ya registrada para esta sesión");
         }
 

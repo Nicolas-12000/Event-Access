@@ -59,6 +59,12 @@ public class EventUseCase implements EventInputPort{
     }
 
     @Override
+    public void deleteEventByName(String eventName) {
+        Event event = getEventByName(eventName);
+        eventOutputPort.deleteEvent(event.getEventId());
+    }
+
+    @Override
     public List<Event> getAllEvents() {
         return eventOutputPort.getAllEvents();
     }
