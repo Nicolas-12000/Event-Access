@@ -27,7 +27,7 @@ public class AttendanceController {
     public ResponseEntity<AttendanceResponse> registerAttendance(
             @Valid @RequestBody AttendanceRequest request) {
         return ResponseEntity.ok(attendanceMapper.toResponse(
-            attendanceInputPort.registerAttendance(request.qrCodeId(), request.sessionNumber())
+            attendanceInputPort.registerAttendance(request.qrCodeId(), request.NumberOfSessions())
         ));
     }
 

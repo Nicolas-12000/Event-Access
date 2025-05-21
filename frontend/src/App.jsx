@@ -1,47 +1,78 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
-import ProtectedRoute from './components/ProtectedRoute';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import Login from './components/Auth/Login';
+import EventList from './components/events/EventList';
+import EventDetail from './components/Events/EventDetail';
+import QRScanner from './components/QR/QRScanner';
 
-
-import Navbar from './components/Navbar';
-
-
-import LoginPage from './pages/Admin/LoginPage';
-import ScanRedirectPage from './pages/ScanRedirectPage';
-import AttendanceConfirmation from './components/AttendanceConfirmation'; 
-import AdminDashboard from './pages/Admin/AdminDashboard';
-import EventDetailsPage from './pages/Event/EventDetailsPage';
-import EventListPage from './pages/Admin/EventListPage';
-import CreateEventPage from './pages/Admin/CreateEventPage';
-import EditEventPage from './pages/Admin/EditEventPage';
-import StudentListPage from './pages/Admin/StudentListPage';
-import CreateStudentPage from './pages/Admin/CreateStudentPage';
-import EditStudentPage from './pages/Admin/EditStudentPage';
-import NotFoundPage from './pages/NotFoundPage'; 
+// Componente para proteger rutas
+const ProtectedRoute = ({ children }) => {
+  const token = localStorage.getItem('token');
+  
+  if (!token) {
+    // Redireccionar al login si no hay token
+    return <Navigate to="/" replace />;
+  }
+  
+  return children;
+};
 
 function App() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Aquí podrías verificar si el token es válido con un endpoint
+    // o simplemente verificar si existe
+    const checkAuth = async () => {
+      // Simulación de carga
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 500);
+    };
+    
+    checkAuth();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+          <p className="mt-2 text-gray-600">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <AuthProvider>
-      <Router>
-        <Navbar />
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/scan/:qrId" element={<ScanRedirectPage />} />
-          <Route element={<ProtectedRoute requiredRole="ADMIN" />}>
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/events" element={<EventListPage />} />
-            <Route path="/admin/events/create" element={<CreateEventPage />} />
-            <Route path="/admin/events/edit/:eventId" element={<EditEventPage />} /> {/* Dynamic route for editing */}
-            <Route path="/admin/students" element={<StudentListPage />} />
-            <Route path="/admin/students/create" element={<CreateStudentPage />} />
-            <Route path="/admin/students/edit/:studentId" element={<EditStudentPage />} /> {/* Dynamic route for editing */}
-          </Route>
-           <Route path="/" element={<Navigate to="/login" />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </Router>
-    </AuthProvider>
+    <BrowserRouter>
+      <Routes>
+        {/* Rutas públicas */}
+        <Route path="/" element={<Login />} />
+        <Route path="/scan/:qrId" element={<QRScanner />} />
+        
+        {/* Rutas protegidas */}
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute>
+              <EventList />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/event/:eventId" 
+          element={
+            <ProtectedRoute>
+              <EventDetail />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Ruta para manejar rutas inexistentes */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

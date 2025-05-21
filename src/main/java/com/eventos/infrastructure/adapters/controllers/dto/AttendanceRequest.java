@@ -7,5 +7,5 @@ import jakarta.validation.constraints.NotBlank;
 
 public record AttendanceRequest(
     @NotBlank UUID qrCodeId,
-    @Min(1) int sessionNumber
+    @Min(1) int NumberOfSessions
 ) {}

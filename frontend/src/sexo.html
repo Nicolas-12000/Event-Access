@@ -1,0 +1,1307 @@
+[⚠️ Suspicious Content] <!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sistema de Asistencia a Eventos</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- SweetAlert2 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/dist/sweetalert2.min.css">
+  <!-- QR Code Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Day.js para manejo de fechas -->
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/dayjs.min.js"></script>
+  <style id="app-style">
+    .loader {
+      border-top-color: #3498db;
+      -webkit-animation: spinner 1.5s linear infinite;
+      animation: spinner 1.5s linear infinite;
+    }
+
+    @-webkit-keyframes spinner {
+      0% { -webkit-transform: rotate(0deg); }
+      100% { -webkit-transform: rotate(360deg); }
+    }
+
+    @keyframes spinner {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.3s;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal {
+      transition: opacity 0.25s ease;
+    }
+    
+    body.modal-active {
+      overflow-x: hidden;
+      overflow-y: hidden !important;
+    }
+
+    /* Estilo para tarjetas en vista móvil */
+    @media (max-width: 640px) {
+      .card-list .card {
+        @apply block mb-4 p-4 bg-white rounded-lg shadow;
+      }
+      
+      .card-list .card-label {
+        @apply font-bold text-gray-700 mr-2;
+      }
+      
+      .card-list .card-value {
+        @apply text-gray-900;
+      }
+      
+      .card-list .card-row {
+        @apply flex flex-col mb-2;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <!-- Componente de carga global -->
+  <div id="global-loader" class="hidden fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 z-50">
+    <div class="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-24 w-24"></div>
+  </div>
+  
+  <!-- Toast de notificaciones -->
+  <div id="toast" class="hidden fixed top-4 right-4 z-50 px-4 py-2 rounded-lg text-white font-medium shadow-lg"></div>
+
+  <!-- Contenido de la aplicación -->
+  <div id="app" class="relative">
+    <!-- Login View -->
+    <div id="login-view" class="min-h-screen flex items-center justify-center px-4">
+      <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+        <div class="text-center mb-8">
+          <h1 class="text-3xl font-bold text-gray-800">Sistema de Asistencia</h1>
+          <p class="text-gray-600 mt-2">Inicie sesión para continuar</p>
+        </div>
+        
+        <form id="login-form" class="space-y-6">
+          <div>
+            <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
+            <input type="text" id="username" name="username" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          
+          <div>
+            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+            <input type="password" id="password" name="password" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          
+          <!-- Credenciales de prueba -->
+          <p class="text-sm text-gray-500 mt-4">
+            Credenciales de prueba: usuario 'admin' y contraseña 'admin'.
+          </p>
+          
+          <div>
+            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+              Iniciar Sesión
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Dashboard View (hidden initially) -->
+    <div id="dashboard-view" class="hidden">
+      <!-- Header/Navbar -->
+      <nav class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex justify-between h-16">
+            <div class="flex">
+              <div class="flex-shrink-0 flex items-center">
+                <span class="text-2xl font-bold text-blue-600">EventAssist</span>
+              </div>
+            </div>
+            <div class="flex items-center">
+              <button id="logout-button" class="ml-4 px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                Cerrar sesión
+              </button>
+              <button id="mobile-menu-button" class="ml-4 inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 lg:hidden">
+                <i class="fas fa-bars"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Menú móvil -->
+        <div id="mobile-menu" class="hidden lg:hidden">
+          <div class="pt-2 pb-3 space-y-1">
+            <a href="javascript:void(0)" class="bg-blue-50 border-l-4 border-blue-500 text-blue-700 block pl-3 pr-4 py-2 text-base font-medium">
+              Eventos
+            </a>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Main Content -->
+      <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Lista de eventos -->
+        <div id="events-container">
+          <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-900">Eventos</h1>
+            <button id="create-event-button" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+              <i class="fas fa-plus mr-2"></i> Crear evento
+            </button>
+          </div>
+
+          <!-- Tabla de eventos -->
+          <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="sm:hidden card-list" id="events-cards">
+              <!-- Contenido dinámico para vista móvil -->
+            </div>
+            
+            <div class="hidden sm:block">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
+                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="events-table-body" class="bg-white divide-y divide-gray-200">
+                  <!-- Contenido dinámico -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Paginación -->
+          <div class="mt-4 flex justify-between items-center">
+            <div class="text-sm text-gray-700">
+              Mostrando <span id="items-showing">1-10</span> de <span id="total-items">X</span> eventos
+            </div>
+            <div class="flex items-center space-x-2">
+              <button id="prev-page" class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+                <i class="fas fa-chevron-left mr-1"></i> Anterior
+              </button>
+              <span id="current-page" class="text-sm font-medium text-gray-700">Página 1</span>
+              <button id="next-page" class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+                Siguiente <i class="fas fa-chevron-right ml-1"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detalle del evento (hidden initially) -->
+        <div id="event-detail-container" class="hidden">
+          <div class="flex items-center mb-6">
+            <button id="back-to-events" class="mr-4 text-gray-600 hover:text-gray-900">
+              <i class="fas fa-arrow-left"></i>
+            </button>
+            <h1 class="text-2xl font-bold text-gray-900">Detalles del evento</h1>
+          </div>
+
+          <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
+            <div class="px-4 py-5 sm:px-6">
+              <h2 id="event-detail-title" class="text-xl font-bold text-gray-900"></h2>
+              <p id="event-detail-date" class="mt-1 max-w-2xl text-sm text-gray-500"></p>
+              <p id="event-detail-description" class="mt-1 max-w-2xl text-sm text-gray-500"></p>
+            </div>
+          </div>
+
+          <div class="flex justify-between items-center mb-4">
+            <div class="flex space-x-2">
+              <button id="add-student-button" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <i class="fas fa-plus mr-2"></i> Agregar estudiante
+              </button>
+              <button id="upload-excel-button" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <i class="fas fa-file-excel mr-2"></i> Cargar Excel
+              </button>
+            </div>
+            <button id="send-qr-button" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+              <i class="fas fa-qrcode mr-2"></i> Enviar QR a todos
+            </button>
+          </div>
+
+          <!-- Tabla de estudiantes -->
+          <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="sm:hidden card-list" id="students-cards">
+              <!-- Contenido dinámico para vista móvil -->
+            </div>
+            
+            <div class="hidden sm:block">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Correo</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="students-table-body" class="bg-white divide-y divide-gray-200">
+                  <!-- Contenido dinámico -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- QR Scan View (hidden initially) -->
+    <div id="qr-scan-view" class="hidden fixed inset-0 bg-gray-800 bg-opacity-90 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 overflow-hidden">
+        <div class="px-6 py-4 bg-blue-600">
+          <h3 class="text-xl font-bold text-white">Confirmar Asistencia</h3>
+        </div>
+        <div class="p-6">
+          <div class="mb-6 text-center">
+            <p class="text-gray-700 mb-2">¿Registrar asistencia para este código?</p>
+            <div class="p-4 bg-gray-50 rounded-lg mb-4">
+              <div class="mb-2">
+                <span class="font-bold">Nombre:</span> 
+                <span id="qr-student-name">-</span>
+              </div>
+              <div class="mb-2">
+                <span class="font-bold">Evento:</span> 
+                <span id="qr-event-name">-</span>
+              </div>
+              <div>
+                <span class="font-bold">Sesión:</span> 
+                <span id="qr-session-number">-</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex justify-end space-x-3">
+            <button id="qr-cancel-button" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              Cancelar
+            </button>
+            <button id="qr-confirm-button" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+              Confirmar Asistencia
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODALS -->
+    <!-- Modal de Crear/Editar Evento -->
+    <div id="event-modal" class="hidden fixed z-50 inset-0 overflow-y-auto">
+      <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+          <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+        </div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+          <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <h3 id="event-modal-title" class="text-lg font-medium text-gray-900 mb-4">Crear Evento</h3>
+            <form id="event-form" class="space-y-4">
+              <input type="hidden" id="event-id">
+              <div>
+                <label for="event-name" class="block text-sm font-medium text-gray-700 mb-1">Nombre del evento</label>
+                <input type="text" id="event-name" name="event-name" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+              </div>
+              <div>
+                <label for="event-date" class="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
+                <input type="date" id="event-date" name="event-date" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+              </div>
+              <div>
+                <label for="event-description" class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                <textarea id="event-description" name="event-description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"></textarea>
+              </div>
+            </form>
+          </div>
+          <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+            <button id="event-save-button" type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+              Guardar
+            </button>
+            <button id="event-cancel-button" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Agregar/Editar Estudiante -->
+    <div id="student-modal" class="hidden fixed z-50 inset-0 overflow-y-auto">
+      <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+          <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+        </div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+          <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <h3 id="student-modal-title" class="text-lg font-medium text-gray-900 mb-4">Agregar Estudiante</h3>
+            <form id="student-form" class="space-y-4">
+              <input type="hidden" id="student-id">
+              <div>
+                <label for="student-name" class="block text-sm font-medium text-gray-700 mb-1">Nombre del estudiante</label>
+                <input type="text" id="student-name" name="student-name" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+              </div>
+              <div>
+                <label for="student-email" class="block text-sm font-medium text-gray-700 mb-1">Correo electrónico</label>
+                <input type="email" id="student-email" name="student-email" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+              </div>
+            </form>
+          </div>
+          <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+            <button id="student-save-button" type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+              Guardar
+            </button>
+            <button id="student-cancel-button" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Cargar Excel -->
+    <div id="excel-modal" class="hidden fixed z-50 inset-0 overflow-y-auto">
+      <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+          <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+        </div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+          <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Cargar Lista de Estudiantes</h3>
+            <form id="excel-form" class="space-y-4">
+              <div>
+                <label for="excel-file" class="block text-sm font-medium text-gray-700 mb-2">Seleccione archivo Excel (.xlsx)</label>
+                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                  <div class="space-y-1 text-center">
+                    <i class="fas fa-file-excel text-gray-400 text-3xl mb-3"></i>
+                    <div class="flex text-sm text-gray-600">
+                      <label for="excel-file" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500">
+                        <span>Seleccionar archivo</span>
+                        <input id="excel-file" name="excel-file" type="file" accept=".xlsx" class="sr-only">
+                      </label>
+                      <p class="pl-1">o arrastre y suelte</p>
+                    </div>
+                    <p class="text-xs text-gray-500">
+                      El archivo debe incluir columnas para nombre y correo electrónico
+                    </p>
+                    <p id="file-name" class="text-sm text-gray-500 mt-2 hidden"></p>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+            <button id="excel-upload-button" type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+              Subir
+            </button>
+            <button id="excel-cancel-button" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/dist/sweetalert2.all.min.js"></script>
+  
+  <script id="app-script">
+    // Variables globales
+    let currentPage = 0;
+    let pageSize = 10;
+    let totalEvents = 0;
+    let currentEventId = null;
+    
+    // DOM elements
+    const loginView = document.getElementById('login-view');
+    const dashboardView = document.getElementById('dashboard-view');
+    const qrScanView = document.getElementById('qr-scan-view');
+    const eventsContainer = document.getElementById('events-container');
+    const eventDetailContainer = document.getElementById('event-detail-container');
+    const eventModal = document.getElementById('event-modal');
+    const studentModal = document.getElementById('student-modal');
+    const excelModal = document.getElementById('excel-modal');
+    const globalLoader = document.getElementById('global-loader');
+    
+    // Simulación básica de API
+    const api = {
+      auth: {
+        login: async (username, password) => {
+          // Simulando tiempo de respuesta de red
+          await new Promise(resolve => setTimeout(resolve, 800));
+          
+          if (username === 'admin' && password === 'admin') {
+            return { 
+              token: 'fake-jwt-token',
+              user: { id: 1, username: 'admin', name: 'Administrador' } 
+            };
+          } else {
+            throw new Error('Credenciales inválidas');
+          }
+        }
+      },
+      events: {
+        getEvents: async (page = 0, size = 10) => {
+          await new Promise(resolve => setTimeout(resolve, 600));
+          
+          const mockEvents = [
+            { id: 1, name: 'Conferencia de Desarrollo Web', date: '2025-03-15', description: 'Evento sobre las últimas tendencias en desarrollo web.' },
+            { id: 2, name: 'Taller de Diseño UX/UI', date: '2025-03-20', description: 'Taller práctico de diseño de interfaces.' },
+            { id: 3, name: 'Hackathon de Innovación', date: '2025-04-10', description: 'Competencia de 48 horas para desarrollar soluciones innovadoras.' },
+            { id: 4, name: 'Seminario de Seguridad Informática', date: '2025-04-25', description: 'Conferencia sobre cyberseguridad y mejores prácticas.' },
+            { id: 5, name: 'Curso de Data Science', date: '2025-05-05', description: 'Introducción a la ciencia de datos y machine learning.' }
+          ];
+          
+          return {
+            content: mockEvents,
+            totalElements: mockEvents.length,
+            totalPages: 1,
+            size: size,
+            number: page
+          };
+        },
+        getEventById: async (id) => {
+          await new Promise(resolve => setTimeout(resolve, 400));
+          
+          const mockEvents = [
+            { id: 1, name: 'Conferencia de Desarrollo Web', date: '2025-03-15', description: 'Evento sobre las últimas tendencias en desarrollo web.' },
+            { id: 2, name: 'Taller de Diseño UX/UI', date: '2025-03-20', description: 'Taller práctico de diseño de interfaces.' },
+            { id: 3, name: 'Hackathon de Innovación', date: '2025-04-10', description: 'Competencia de 48 horas para desarrollar soluciones innovadoras.' },
+            { id: 4, name: 'Seminario de Seguridad Informática', date: '2025-04-25', description: 'Conferencia sobre cyberseguridad y mejores prácticas.' },
+            { id: 5, name: 'Curso de Data Science', date: '2025-05-05', description: 'Introducción a la ciencia de datos y machine learning.' }
+          ];
+          
+          const event = mockEvents.find(e => e.id === parseInt(id));
+          if (!event) {
+            throw new Error('Evento no encontrado');
+          }
+          return event;
+        },
+        createEvent: async (eventData) => {
+          await new Promise(resolve => setTimeout(resolve, 800));
+          return { ...eventData, id: Math.floor(Math.random() * 1000) + 6 };
+        },
+        updateEvent: async (id, eventData) => {
+          await new Promise(resolve => setTimeout(resolve, 800));
+          return { ...eventData, id: parseInt(id) };
+        },
+        deleteEvent: async (id) => {
+          await new Promise(resolve => setTimeout(resolve, 600));
+          return { success: true };
+        }
+      },
+      students: {
+        getStudentsByEvent: async (eventId) => {
+          await new Promise(resolve => setTimeout(resolve, 600));
+          
+          const mockStudents = [
+            { id: 1, name: 'Ana Martínez', email: 'ana.martinez@ejemplo.com', status: 'No asistió' },
+            { id: 2, name: 'Carlos Gómez', email: 'carlos.gomez@ejemplo.com', status: 'Asistió' },
+            { id: 3, name: 'Laura Díaz', email: 'laura.diaz@ejemplo.com', status: 'No asistió' },
+            { id: 4, name: 'Miguel Ángel Pérez', email: 'miguel.perez@ejemplo.com', status: 'Asistió' }
+          ];
+          
+          return mockStudents;
+        },
+        createStudent: async (studentData) => {
+          await new Promise(resolve => setTimeout(resolve, 800));
+          return { ...studentData, id: Math.floor(Math.random() * 1000) + 10 };
+        },
+        updateStudent: async (id, studentData) => {
+          await new Promise(resolve => setTimeout(resolve, 800));
+          return { ...studentData, id: parseInt(id) };
+        },
+        deleteStudent: async (id) => {
+          await new Promise(resolve => setTimeout(resolve, 600));
+          return { success: true };
+        },
+        uploadStudentsExcel: async (file) => {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          return { 
+            success: true,
+            studentsProcessed: 15,
+            studentsAdded: 10,
+            studentsUpdated: 5
+          };
+        }
+      },
+      attendance: {
+        getAttendanceByQR: async (qrId) => {
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Simular información del estudiante y evento para el QR escaneado
+          return { 
+            id: qrId,
+            student: { id: 1, name: 'Ana Martínez', email: 'ana.martinez@ejemplo.com' },
+            event: { id: 1, name: 'Conferencia de Desarrollo Web' },
+            sessionNumber: 1,
+            attended: false,
+            attendanceDate: null
+          };
+        },
+        confirmAttendance: async (attendanceData) => {
+          await new Promise(resolve => setTimeout(resolve, 800));
+          return { 
+            ...attendanceData, 
+            attended: true, 
+            attendanceDate: new Date().toISOString() 
+          };
+        },
+        generateQRCode: async (eventId, sessionNumber = 1) => {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          return { 
+            success: true, 
+            message: 'QR enviados correctamente', 
+            sentEmails: 4 
+          };
+        }
+      }
+    };
+    
+    // Utilities
+    function showLoader() {
+      globalLoader.classList.remove('hidden');
+    }
+    
+    function hideLoader() {
+      globalLoader.classList.add('hidden');
+    }
+    
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.remove('hidden', 'bg-green-500', 'bg-red-500');
+      toast.classList.add(type === 'success' ? 'bg-green-500' : 'bg-red-500');
+      
+      // Show toast
+      toast.classList.add('fade-in');
+      
+      // Hide after 3 seconds
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 3000);
+    }
+    
+    function formatDate(dateString) {
+      return dayjs(dateString).format('DD/MM/YYYY');
+    }
+    
+    // Navigation functions
+    function showLogin() {
+      loginView.classList.remove('hidden');
+      dashboardView.classList.add('hidden');
+      qrScanView.classList.add('hidden');
+    }
+    
+    function showDashboard() {
+      loginView.classList.add('hidden');
+      dashboardView.classList.remove('hidden');
+      qrScanView.classList.add('hidden');
+      
+      // Reset view
+      eventsContainer.classList.remove('hidden');
+      eventDetailContainer.classList.add('hidden');
+      
+      // Load events
+      loadEvents();
+    }
+    
+    function showEventDetail(eventId) {
+      eventsContainer.classList.add('hidden');
+      eventDetailContainer.classList.remove('hidden');
+      
+      currentEventId = eventId;
+      loadEventDetail(eventId);
+    }
+    
+    function showQRScan(qrId) {
+      loginView.classList.add('hidden');
+      dashboardView.classList.add('hidden');
+      qrScanView.classList.remove('hidden');
+      
+      loadQRData(qrId);
+    }
+    
+    // Modal functions
+    function openEventModal(event = null) {
+      const modalTitle = document.getElementById('event-modal-title');
+      const eventIdInput = document.getElementById('event-id');
+      const eventNameInput = document.getElementById('event-name');
+      const eventDateInput = document.getElementById('event-date');
+      const eventDescInput = document.getElementById('event-description');
+      
+      if (event) {
+        // Edit mode
+        modalTitle.textContent = 'Editar Evento';
+        eventIdInput.value = event.id;
+        eventNameInput.value = event.name;
+        eventDateInput.value = event.date;
+        eventDescInput.value = event.description || '';
+      } else {
+        // Create mode
+        modalTitle.textContent = 'Crear Evento';
+        eventIdInput.value = '';
+        eventNameInput.value = '';
+        eventDateInput.value = '';
+        eventDescInput.value = '';
+      }
+      
+      eventModal.classList.remove('hidden');
+      document.body.classList.add('modal-active');
+    }
+    
+    function closeEventModal() {
+      eventModal.classList.add('hidden');
+      document.body.classList.remove('modal-active');
+    }
+    
+    function openStudentModal(student = null) {
+      const modalTitle = document.getElementById('student-modal-title');
+      const studentIdInput = document.getElementById('student-id');
+      const studentNameInput = document.getElementById('student-name');
+      const studentEmailInput = document.getElementById('student-email');
+      
+      if (student) {
+        // Edit mode
+        modalTitle.textContent = 'Editar Estudiante';
+        studentIdInput.value = student.id;
+        studentNameInput.value = student.name;
+        studentEmailInput.value = student.email;
+      } else {
+        // Create mode
+        modalTitle.textContent = 'Agregar Estudiante';
+        studentIdInput.value = '';
+        studentNameInput.value = '';
+        studentEmailInput.value = '';
+      }
+      
+      studentModal.classList.remove('hidden');
+      document.body.classList.add('modal-active');
+    }
+    
+    function closeStudentModal() {
+      studentModal.classList.add('hidden');
+      document.body.classList.remove('modal-active');
+    }
+    
+    function openExcelModal() {
+      const fileInput = document.getElementById('excel-file');
+      const fileName = document.getElementById('file-name');
+      
+      fileInput.value = '';
+      fileName.textContent = '';
+      fileName.classList.add('hidden');
+      
+      excelModal.classList.remove('hidden');
+      document.body.classList.add('modal-active');
+    }
+    
+    function closeExcelModal() {
+      excelModal.classList.add('hidden');
+      document.body.classList.remove('modal-active');
+    }
+    
+    // Data loading functions
+    async function loadEvents() {
+      try {
+        showLoader();
+        const response = await api.events.getEvents(currentPage, pageSize);
+        
+        const eventsTable = document.getElementById('events-table-body');
+        const eventsCards = document.getElementById('events-cards');
+        
+        // Clear existing content
+        eventsTable.innerHTML = '';
+        eventsCards.innerHTML = '';
+        
+        // Update pagination info
+        totalEvents = response.totalElements;
+        document.getElementById('total-items').textContent = totalEvents;
+        document.getElementById('items-showing').textContent = `${currentPage * pageSize + 1}-${Math.min((currentPage + 1) * pageSize, totalEvents)}`;
+        document.getElementById('current-page').textContent = `Página ${currentPage + 1}`;
+        
+        // Disable/enable pagination buttons
+        document.getElementById('prev-page').disabled = currentPage === 0;
+        document.getElementById('next-page').disabled = currentPage >= response.totalPages - 1;
+        
+        if (response.content.length === 0) {
+          // No events to display
+          eventsTable.innerHTML = `
+            <tr>
+              <td colspan="4" class="px-6 py-4 text-center text-gray-500">
+                No hay eventos disponibles. ¡Crea tu primer evento!
+              </td>
+            </tr>
+          `;
+          
+          eventsCards.innerHTML = `
+            <div class="p-4 text-center text-gray-500">
+              No hay eventos disponibles. ¡Crea tu primer evento!
+            </div>
+          `;
+        } else {
+          // Populate table rows
+          response.content.forEach(event => {
+            // Desktop view (table)
+            const tableRow = document.createElement('tr');
+            tableRow.innerHTML = `
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900">${event.name}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900">${formatDate(event.date)}</div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="text-sm text-gray-900">${event.description || '-'}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <button class="text-blue-600 hover:text-blue-900 mr-3 view-event" data-id="${event.id}">
+                  <i class="fas fa-eye"></i> Ver
+                </button>
+                <button class="text-indigo-600 hover:text-indigo-900 mr-3 edit-event" data-id="${event.id}">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="text-red-600 hover:text-red-900 delete-event" data-id="${event.id}">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            `;
+            eventsTable.appendChild(tableRow);
+            
+            // Mobile view (cards)
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+              <div class="card-row">
+                <span class="card-label">Nombre:</span>
+                <span class="card-value">${event.name}</span>
+              </div>
+              <div class="card-row">
+                <span class="card-label">Fecha:</span>
+                <span class="card-value">${formatDate(event.date)}</span>
+              </div>
+              <div class="card-row">
+                <span class="card-label">Descripción:</span>
+                <span class="card-value">${event.description || '-'}</span>
+              </div>
+              <div class="flex justify-end mt-3">
+                <button class="text-blue-600 hover:text-blue-900 mr-3 view-event" data-id="${event.id}">
+                  <i class="fas fa-eye"></i> Ver
+                </button>
+                <button class="text-indigo-600 hover:text-indigo-900 mr-3 edit-event" data-id="${event.id}">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="text-red-600 hover:text-red-900 delete-event" data-id="${event.id}">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            `;
+            eventsCards.appendChild(card);
+          });
+          
+          // Add event listeners to buttons
+          document.querySelectorAll('.view-event').forEach(button => {
+            button.addEventListener('click', () => {
+              const eventId = button.getAttribute('data-id');
+              showEventDetail(eventId);
+            });
+          });
+          
+          document.querySelectorAll('.edit-event').forEach(button => {
+            button.addEventListener('click', async () => {
+              const eventId = button.getAttribute('data-id');
+              try {
+                showLoader();
+                const event = await api.events.getEventById(eventId);
+                openEventModal(event);
+              } catch (error) {
+                showToast(error.message || 'Error al cargar evento', 'error');
+              } finally {
+                hideLoader();
+              }
+            });
+          });
+          
+          document.querySelectorAll('.delete-event').forEach(button => {
+            button.addEventListener('click', () => {
+              const eventId = button.getAttribute('data-id');
+              confirmDeleteEvent(eventId);
+            });
+          });
+        }
+      } catch (error) {
+        showToast(error.message || 'Error al cargar eventos', 'error');
+      } finally {
+        hideLoader();
+      }
+    }
+    
+    async function loadEventDetail(eventId) {
+      try {
+        showLoader();
+        
+        // Get event details
+        const event = await api.events.getEventById(eventId);
+        
+        // Update event header
+        document.getElementById('event-detail-title').textContent = event.name;
+        document.getElementById('event-detail-date').textContent = `Fecha: ${formatDate(event.date)}`;
+        document.getElementById('event-detail-description').textContent = event.description || 'Sin descripción';
+        
+        // Get students for this event
+        const students = await api.students.getStudentsByEvent(eventId);
+        
+        const studentsTable = document.getElementById('students-table-body');
+        const studentsCards = document.getElementById('students-cards');
+        
+        // Clear existing content
+        studentsTable.innerHTML = '';
+        studentsCards.innerHTML = '';
+        
+        if (students.length === 0) {
+          // No students to display
+          studentsTable.innerHTML = `
+            <tr>
+              <td colspan="4" class="px-6 py-4 text-center text-gray-500">
+                No hay estudiantes registrados. Agrega estudiantes para este evento.
+              </td>
+            </tr>
+          `;
+          
+          studentsCards.innerHTML = `
+            <div class="p-4 text-center text-gray-500">
+              No hay estudiantes registrados. Agrega estudiantes para este evento.
+            </div>
+          `;
+        } else {
+          // Populate table rows
+          students.forEach(student => {
+            // Desktop view (table)
+            const tableRow = document.createElement('tr');
+            tableRow.innerHTML = `
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900">${student.name}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900">${student.email}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${student.status === 'Asistió' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                  ${student.status}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <button class="text-indigo-600 hover:text-indigo-900 mr-3 edit-student" data-id="${student.id}">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="text-red-600 hover:text-red-900 delete-student" data-id="${student.id}">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            `;
+            studentsTable.appendChild(tableRow);
+            
+            // Mobile view (cards)
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+              <div class="card-row">
+                <span class="card-label">Nombre:</span>
+                <span class="card-value">${student.name}</span>
+              </div>
+              <div class="card-row">
+                <span class="card-label">Correo:</span>
+                <span class="card-value">${student.email}</span>
+              </div>
+              <div class="card-row">
+                <span class="card-label">Estado:</span>
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${student.status === 'Asistió' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                  ${student.status}
+                </span>
+              </div>
+              <div class="flex justify-end mt-3">
+                <button class="text-indigo-600 hover:text-indigo-900 mr-3 edit-student" data-id="${student.id}">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="text-red-600 hover:text-red-900 delete-student" data-id="${student.id}">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            `;
+            studentsCards.appendChild(card);
+          });
+          
+          // Add event listeners to buttons
+          document.querySelectorAll('.edit-student').forEach(button => {
+            button.addEventListener('click', () => {
+              const studentId = button.getAttribute('data-id');
+              const student = students.find(s => s.id == studentId);
+              if (student) {
+                openStudentModal(student);
+              }
+            });
+          });
+          
+          document.querySelectorAll('.delete-student').forEach(button => {
+            button.addEventListener('click', () => {
+              const studentId = button.getAttribute('data-id');
+              confirmDeleteStudent(studentId);
+            });
+          });
+        }
+      } catch (error) {
+        showToast(error.message || 'Error al cargar detalles del evento', 'error');
+      } finally {
+        hideLoader();
+      }
+    }
+    
+    async function loadQRData(qrId) {
+      try {
+        showLoader();
+        const attendance = await api.attendance.getAttendanceByQR(qrId);
+        
+        document.getElementById('qr-student-name').textContent = attendance.student.name;
+        document.getElementById('qr-event-name').textContent = attendance.event.name;
+        document.getElementById('qr-session-number').textContent = attendance.sessionNumber;
+        
+        // Configure confirm button
+        const confirmButton = document.getElementById('qr-confirm-button');
+        confirmButton.onclick = async () => {
+          try {
+            showLoader();
+            await api.attendance.confirmAttendance({ id: attendance.id });
+            showToast('Asistencia registrada correctamente', 'success');
+            
+            // Redirect back or close after 2 seconds
+            setTimeout(() => {
+              window.history.back();
+            }, 2000);
+          } catch (error) {
+            showToast(error.message || 'Error al registrar asistencia', 'error');
+          } finally {
+            hideLoader();
+          }
+        };
+        
+        // Configure cancel button
+        const cancelButton = document.getElementById('qr-cancel-button');
+        cancelButton.onclick = () => {
+          window.history.back();
+        };
+      } catch (error) {
+        showToast(error.message || 'Error al cargar información del QR', 'error');
+        
+        // Redirect back after error
+        setTimeout(() => {
+          window.history.back();
+        }, 2000);
+      } finally {
+        hideLoader();
+      }
+    }
+    
+    // Action functions
+    function confirmDeleteEvent(eventId) {
+      Swal.fire({
+        title: '¿Estás seguro?',
+        text: "No podrás revertir esta acción",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          try {
+            showLoader();
+            await api.events.deleteEvent(eventId);
+            showToast('Evento eliminado correctamente', 'success');
+            loadEvents();
+          } catch (error) {
+            showToast(error.message || 'Error al eliminar evento', 'error');
+          } finally {
+            hideLoader();
+          }
+        }
+      });
+    }
+    
+    function confirmDeleteStudent(studentId) {
+      Swal.fire({
+        title: '¿Estás seguro?',
+        text: "No podrás revertir esta acción",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          try {
+            showLoader();
+            await api.students.deleteStudent(studentId);
+            showToast('Estudiante eliminado correctamente', 'success');
+            loadEventDetail(currentEventId);
+          } catch (error) {
+            showToast(error.message || 'Error al eliminar estudiante', 'error');
+          } finally {
+            hideLoader();
+          }
+        }
+      });
+    }
+    
+    async function sendQRToAllStudents() {
+      try {
+        showLoader();
+        const result = await api.attendance.generateQRCode(currentEventId, 1);
+        showToast(result.message, 'success');
+      } catch (error) {
+        showToast(error.message || 'Error al enviar códigos QR', 'error');
+      } finally {
+        hideLoader();
+      }
+    }
+    
+    // Event Listeners
+    document.addEventListener('DOMContentLoaded', function() {
+      // Check if we're on QR scan page by checking URL
+      const pathParts = window.location.pathname.split('/');
+      if (pathParts.length >= 3 && pathParts[1] === 'scan') {
+        const qrId = pathParts[2];
+        showQRScan(qrId);
+        return;
+      }
+      
+      // Check for existing token
+      const token = localStorage.getItem('token');
+      if (token) {
+        showDashboard();
+      } else {
+        showLogin();
+      }
+      
+      // Login form
+      document.getElementById('login-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        
+        try {
+          showLoader();
+          const result = await api.auth.login(username, password);
+          
+          // Store token in localStorage
+          localStorage.setItem('token', result.token);
+          
+          showToast('Inicio de sesión exitoso', 'success');
+          showDashboard();
+        } catch (error) {
+          showToast(error.message || 'Error al iniciar sesión', 'error');
+        } finally {
+          hideLoader();
+        }
+      });
+      
+      // Logout button
+      document.getElementById('logout-button').addEventListener('click', function() {
+        localStorage.removeItem('token');
+        showLogin();
+        showToast('Sesión cerrada', 'success');
+      });
+      
+      // Mobile menu toggle
+      document.getElementById('mobile-menu-button').addEventListener('click', function() {
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenu.classList.toggle('hidden');
+      });
+      
+      // Pagination
+      document.getElementById('prev-page').addEventListener('click', function() {
+        if (currentPage > 0) {
+          currentPage--;
+          loadEvents();
+        }
+      });
+      
+      document.getElementById('next-page').addEventListener('click', function() {
+        if (currentPage < Math.ceil(totalEvents / pageSize) - 1) {
+          currentPage++;
+          loadEvents();
+        }
+      });
+      
+      // Back to events list
+      document.getElementById('back-to-events').addEventListener('click', function() {
+        eventsContainer.classList.remove('hidden');
+        eventDetailContainer.classList.add('hidden');
+        currentEventId = null;
+      });
+      
+      // Create event button
+      document.getElementById('create-event-button').addEventListener('click', function() {
+        openEventModal();
+      });
+      
+      // Event modal buttons
+      document.getElementById('event-save-button').addEventListener('click', async function() {
+        const form = document.getElementById('event-form');
+        if (form.checkValidity()) {
+          const eventId = document.getElementById('event-id').value;
+          const eventData = {
+            name: document.getElementById('event-name').value,
+            date: document.getElementById('event-date').value,
+            description: document.getElementById('event-description').value
+          };
+          
+          try {
+            showLoader();
+            closeEventModal();
+            
+            if (eventId) {
+              // Update existing event
+              await api.events.updateEvent(eventId, eventData);
+              showToast('Evento actualizado correctamente', 'success');
+            } else {
+              // Create new event
+              await api.events.createEvent(eventData);
+              showToast('Evento creado correctamente', 'success');
+            }
+            
+            // Reload events list
+            loadEvents();
+          } catch (error) {
+            showToast(error.message || 'Error al guardar evento', 'error');
+          } finally {
+            hideLoader();
+          }
+        } else {
+          // Trigger HTML5 validation
+          form.reportValidity();
+        }
+      });
+      
+      document.getElementById('event-cancel-button').addEventListener('click', function() {
+        closeEventModal();
+      });
+      
+      // Add student button
+      document.getElementById('add-student-button').addEventListener('click', function() {
+        openStudentModal();
+      });
+      
+      // Student modal buttons
+      document.getElementById('student-save-button').addEventListener('click', async function() {
+        const form = document.getElementById('student-form');
+        if (form.checkValidity()) {
+          const studentId = document.getElementById('student-id').value;
+          const studentData = {
+            name: document.getElementById('student-name').value,
+            email: document.getElementById('student-email').value,
+            eventId: currentEventId
+          };
+          
+          try {
+            showLoader();
+            closeStudentModal();
+            
+            if (studentId) {
+              // Update existing student
+              await api.students.updateStudent(studentId, studentData);
+              showToast('Estudiante actualizado correctamente', 'success');
+            } else {
+              // Create new student
+              await api.students.createStudent(studentData);
+              showToast('Estudiante agregado correctamente', 'success');
+            }
+            
+            // Reload students list
+            loadEventDetail(currentEventId);
+          } catch (error) {
+            showToast(error.message || 'Error al guardar estudiante', 'error');
+          } finally {
+            hideLoader();
+          }
+        } else {
+          // Trigger HTML5 validation
+          form.reportValidity();
+        }
+      });
+      
+      document.getElementById('student-cancel-button').addEventListener('click', function() {
+        closeStudentModal();
+      });
+      
+      // Excel upload button
+      document.getElementById('upload-excel-button').addEventListener('click', function() {
+        openExcelModal();
+      });
+      
+      // Show file name when selected
+      document.getElementById('excel-file').addEventListener('change', function(e) {
+        const fileName = document.getElementById('file-name');
+        if (e.target.files.length > 0) {
+          fileName.textContent = e.target.files[0].name;
+          fileName.classList.remove('hidden');
+        } else {
+          fileName.classList.add('hidden');
+        }
+      });
+      
+      // Excel modal buttons
+      document.getElementById('excel-upload-button').addEventListener('click', async function() {
+        const fileInput = document.getElementById('excel-file');
+        if (fileInput.files.length > 0) {
+          try {
+            showLoader();
+            closeExcelModal();
+            
+            const result = await api.students.uploadStudentsExcel(fileInput.files[0]);
+            showToast(`${result.studentsProcessed} estudiantes procesados (${result.studentsAdded} nuevos, ${result.studentsUpdated} actualizados)`, 'success');
+            
+            // Reload students list
+            loadEventDetail(currentEventId);
+          } catch (error) {
+            showToast(error.message || 'Error al cargar archivo', 'error');
+          } finally {
+            hideLoader();
+          }
+        } else {
+          showToast('Seleccione un archivo para continuar', 'error');
+        }
+      });
+      
+      document.getElementById('excel-cancel-button').addEventListener('click', function() {
+        closeExcelModal();
+      });
+      
+      // Send QR button
+      document.getElementById('send-qr-button').addEventListener('click', async function() {
+        Swal.fire({
+          title: '¿Enviar códigos QR?',
+          text: "Se enviará un correo con el código QR a todos los estudiantes registrados",
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#d33',
+          confirmButtonText: 'Sí, enviar',
+          cancelButtonText: 'Cancelar'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            sendQRToAllStudents();
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>

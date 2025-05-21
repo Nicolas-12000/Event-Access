@@ -1,76 +1,94 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { login as authLogin, logout as authLogout } from '../services/authService';
+import { createContext, useState, useEffect } from "react";
+import axios from 'axios';
 
-const AuthContext = createContext(null);
+export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [token, setToken] = useState(localStorage.getItem('token'));
   const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [error, setError] = useState(null);
 
+  const validateToken = async (token) => {
+    try {
+      const response = await axios.get('http://localhost:8082/api/auth/validate', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      return response.data.valid;
+    } catch (error) {
+      console.error('Token validation error:', error);
+      return false;
+    }
+  };
 
   useEffect(() => {
-    const checkAuthStatus = async () => {
-      await new Promise(resolve => setTimeout(resolve, 100)); 
-      const token = localStorage.getItem('authToken'); 
-      setIsAuthenticated(!!token); 
-      setIsLoading(false); 
+    const initializeAuth = async () => {
+      const storedToken = localStorage.getItem('token');
+      if (storedToken) {
+        const isValid = await validateToken(storedToken);
+        if (isValid) {
+          setToken(storedToken);
+          setUser({ username: localStorage.getItem('username') || 'Admin' });
+        } else {
+          logout();
+        }
+      }
+      setIsLoading(false);
     };
 
-    checkAuthStatus();
-  }, []); 
+    initializeAuth();
+  }, []);
 
-  const login = async (username, password) => {
-    setIsLoading(true); 
+  const login = async (newToken, username) => {
     try {
-      const { token } = await authLogin({ username, password });
-      if (token) {
-        setIsAuthenticated(true);
+      const isValid = await validateToken(newToken);
+      if (isValid) {
+        localStorage.setItem('token', newToken);
+        localStorage.setItem('username', username);
+        setToken(newToken);
+        setUser({ username });
+        setError(null);
       } else {
-        console.error('Login failed in AuthContext');
-        setIsAuthenticated(false);
-        throw new Error('Login failed'); 
+        throw new Error('Invalid token received');
       }
     } catch (error) {
-      console.error('Error during login:', error);
-      setIsAuthenticated(false);
-      throw error; 
-    } finally {
-      setIsLoading(false);
+      setError('Login failed: ' + error.message);
+      logout();
     }
   };
 
-  const logout = async () => {
-    setIsLoading(true);
-    try {
-      await authLogout(); 
-
-      setIsAuthenticated(false);
-    } catch (error) {
-      console.error('Error during logout:', error);
-      setIsAuthenticated(false);
-    } finally {
-      setIsLoading(false); 
-    }
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('username');
+    setToken(null);
+    setUser(null);
+    setError(null);
   };
 
-  const value = {
-    isAuthenticated,
-    isLoading,
-    login,
-    logout,
+  const checkAuthStatus = async () => {
+    if (token) {
+      const isValid = await validateToken(token);
+      if (!isValid) {
+        logout();
+      }
+    }
   };
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider 
+      value={{ 
+        token, 
+        user, 
+        isLoading, 
+        error,
+        login, 
+        logout,
+        checkAuthStatus 
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
 };

@@ -14,7 +14,7 @@ public class AttendanceMapper {
     public Attendance toDomain(AttendanceRequest request, QRCode qrCode) {
         return Attendance.builder()
                 .qrCode(qrCode)
-                .numberOfSessions(request.sessionNumber())
+                .numberOfSessions(request.NumberOfSessions())
                 .build();
     }
 
